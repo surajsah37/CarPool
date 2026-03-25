@@ -75,6 +75,7 @@ exports.getAllBookings = async (req, res) => {
 // exports.cancelBooking = async (req, res) => {
 //   try {
 //     const bookingId = req.params.id;
+//     const { reason } = req.body;
 
 //     const booking = await Booking.findById(bookingId);
 
@@ -82,7 +83,12 @@ exports.getAllBookings = async (req, res) => {
 //       return res.status(404).json("Booking not found");
 //     }
 
-//     // 🔄 return seats back
+//     // already cancelled check
+//     if (booking.status === "cancelled") {
+//       return res.status(400).json("Already cancelled");
+//     }
+
+//     // 🔄 return seats
 //     const ride = await Ride.findById(booking.ride);
 
 //     if (ride) {
@@ -90,8 +96,11 @@ exports.getAllBookings = async (req, res) => {
 //       await ride.save();
 //     }
 
-//     // ❌ delete booking
-//     await Booking.findByIdAndDelete(bookingId);
+//     // ❌ update instead of delete
+//     booking.status = "cancelled";
+//     booking.cancelReason = reason;
+
+//     await booking.save();
 
 //     res.json({ message: "Booking cancelled successfully" });
 
@@ -100,40 +109,25 @@ exports.getAllBookings = async (req, res) => {
 //     res.status(500).json("Error cancelling booking");
 //   }
 // };
-exports.cancelBooking = async (req, res) => {
+exports.cancelBooking = async (req, res) =>  {
   try {
-    const bookingId = req.params.id;
+    const { id } = req.params;
     const { reason } = req.body;
 
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(id);
 
     if (!booking) {
-      return res.status(404).json("Booking not found");
+      return res.status(404).json({ message: "Booking not found" });
     }
 
-    // already cancelled check
-    if (booking.status === "cancelled") {
-      return res.status(400).json("Already cancelled");
-    }
-
-    // 🔄 return seats
-    const ride = await Ride.findById(booking.ride);
-
-    if (ride) {
-      ride.seatsAvailable += booking.seatsBooked;
-      await ride.save();
-    }
-
-    // ❌ update instead of delete
     booking.status = "cancelled";
-    booking.cancelReason = reason;
+    booking.cancellationReason = reason;
+    booking.cancelledAt = new Date();
 
     await booking.save();
 
-    res.json({ message: "Booking cancelled successfully" });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json("Error cancelling booking");
+    res.json({ message: "Cancelled successfully", booking });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

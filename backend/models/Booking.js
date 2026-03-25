@@ -1,16 +1,42 @@
 
+// const mongoose = require("mongoose");
+
+// const bookingSchema = new mongoose.Schema({
+//   user: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: "User"
+//   },
+//   ride: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: "Ride"
+//   },
+//   seatsBooked: Number
+// });
+
+// module.exports = mongoose.model("Booking", bookingSchema);
+
 const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  ride: { type: mongoose.Schema.Types.ObjectId, ref: "Ride" },
+
+  seatsBooked: Number,
+
+  status: {
+    type: String,
+    enum: ["confirmed", "cancelled"],
+    default: "confirmed",
   },
-  ride: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ride"
+
+  cancellationReason: {
+    type: String,
+    default: "",
   },
-  seatsBooked: Number
+
+  cancelledAt: {
+    type: Date,
+  },
 });
 
 module.exports = mongoose.model("Booking", bookingSchema);
