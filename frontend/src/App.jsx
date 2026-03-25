@@ -12,10 +12,13 @@ import AdminBookings from "./pages/AdminBookings";
 import AdminRides from "./pages/AdminRides";
 import MyRides from "./pages/MyRides";
 import Notifications from "./pages/Notifications";
+import { io } from "socket.io-client";
+import { useEffect } from "react";
+
 function App() {
 
   const token = localStorage.getItem("token");
-
+  const socket = io("http://localhost:5000");
   const handleLogout = () => {
 
     localStorage.removeItem("token");
@@ -23,6 +26,14 @@ function App() {
     window.location.href = "/login";
 
   };
+  
+useEffect(() => {
+  socket.on("notification", (data) => {
+    alert(data.message); // 🔥 simple popup
+  });
+
+  return () => socket.off("notification");
+}, []);
   return (
     <BrowserRouter>
 

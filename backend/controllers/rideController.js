@@ -1,6 +1,6 @@
-
 const Ride = require("../models/Ride");
 const Notification = require("../models/Notification");
+
 // ✅ USER REQUEST RIDE
 exports.offerRide = async (req, res) => {
   try {
@@ -27,7 +27,6 @@ exports.offerRide = async (req, res) => {
     res.status(500).json("Error");
   }
 };
-
 // ✅ USER SEE ONLY APPROVED RIDES
 exports.getRides = async (req, res) => {
   try {
@@ -48,25 +47,7 @@ exports.getAllRidesAdmin = async (req, res) => {
   }
 };
 
-// ✅ APPROVE
-// exports.approveRide = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { price } = req.body;
-
-//     const ride = await Ride.findById(id);
-
-//     ride.status = "approved";
-//     ride.price = price;
-
-//     await ride.save();
-
-//     res.json({ message: "Approved" });
-
-//   } catch (error) {
-//     res.status(500).json("Error");
-//   }
-// };
+// ✅ APPROVE RIDE
 exports.approveRide = async (req, res) => {
   try {
     const { id } = req.params;
@@ -79,10 +60,11 @@ exports.approveRide = async (req, res) => {
 
     await ride.save();
 
-    // ✅ CREATE NOTIFICATION
-    await Notification.create({
-      user: ride.user,
-      message: `Your ride from ${ride.fromCity} to ${ride.toCity} is approved. Price: ₹${price}`
+    // ✅ MOVE HERE (INSIDE FUNCTION)
+    const io = req.app.get("io");
+
+    io.emit("notification", {
+      message: `Ride approved: ₹${price}`
     });
 
     res.json({ message: "Approved" });
@@ -91,33 +73,6 @@ exports.approveRide = async (req, res) => {
     res.status(500).json("Error");
   }
 };
-// exports.rejectRide = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { reason } = req.body;
-
-//     console.log("🔥 RECEIVED REASON:", reason); // DEBUG
-
-//     const ride = await Ride.findById(id);
-
-//     if (!ride) {
-//       return res.status(404).json("Ride not found");
-//     }
-
-//     ride.status = "rejected";
-//     ride.rejectionReason = reason; // ✅ IMPORTANT
-
-//     await ride.save();
-
-//     console.log("🔥 SAVED:", ride.rejectionReason); // DEBUG
-
-//     res.json({ message: "Ride rejected successfully", ride });
-
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json("Error");
-//   }
-// };
 exports.rejectRide = async (req, res) => {
   try {
     const { id } = req.params;
@@ -130,10 +85,11 @@ exports.rejectRide = async (req, res) => {
 
     await ride.save();
 
-    // ✅ CREATE NOTIFICATION
-    await Notification.create({
-      user: ride.user,
-      message: `Your ride was rejected: ${reason}`
+    // ✅ MOVE HERE
+    const io = req.app.get("io");
+
+    io.emit("notification", {
+      message: `Ride rejected: ${reason}`
     });
 
     res.json({ message: "Rejected" });
