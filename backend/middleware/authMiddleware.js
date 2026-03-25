@@ -1,22 +1,15 @@
 // const jwt = require("jsonwebtoken");
-
-// // VERIFY TOKEN
+// // ✅ VERIFY TOKEN
 // const verifyToken = (req, res, next) => {
-//   const authHeader = req.headers.authorization;
-
-//   if (!authHeader) {
+//   const token = req.headers.authorization?.split(" ")[1];
+//   if (!token) {
 //     return res.status(401).json({
 //       message: "Access denied. Please login first."
 //     });
 //   }
-
 //   try {
-//     const token = authHeader.split(" ")[1];
-
-//     const verified = jwt.verify(token, process.env.JWT_SECRET);
-
-//     req.user = verified;
-
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     req.user = decoded; // contains id + role
 //     next();
 //   } catch (error) {
 //     return res.status(401).json({
@@ -24,9 +17,9 @@
 //     });
 //   }
 // };
-
-// // ADMIN CHECK
+// // ✅ ADMIN CHECK
 // const isAdmin = (req, res, next) => {
+
 //   if (req.user && req.user.role === "admin") {
 //     next();
 //   } else {
@@ -34,61 +27,38 @@
 //       message: "Access denied. Admin only."
 //     });
 //   }
+
 // };
 
 // module.exports = { verifyToken, isAdmin };
 
 
-
-
-
-
-
-
-
-
 const jwt = require("jsonwebtoken");
 
-// ✅ VERIFY TOKEN
-const verifyToken = (req, res, next) => {
+exports.verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({
-      message: "Access denied. Please login first."
-    });
+  if (!authHeader) {
+    return res.status(401).json("No token provided");
   }
+
+  const token = authHeader.split(" ")[1];
 
   try {
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = decoded; // contains id + role
+    req.user = decoded; // ✅ VERY IMPORTANT
 
     next();
-
   } catch (error) {
-
-    return res.status(401).json({
-      message: "Invalid token"
-    });
-
+    return res.status(401).json("Invalid token");
   }
-
 };
 
 // ✅ ADMIN CHECK
-const isAdmin = (req, res, next) => {
-
-  if (req.user && req.user.role === "admin") {
-    next();
-  } else {
-    return res.status(403).json({
-      message: "Access denied. Admin only."
-    });
+exports.isAdmin = (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json("Access denied");
   }
-
+  next();
 };
-
-module.exports = { verifyToken, isAdmin };

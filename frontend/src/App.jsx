@@ -10,7 +10,8 @@ import DriverRoute from "./components/DriverRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminBookings from "./pages/AdminBookings";
 import AdminRides from "./pages/AdminRides";
-
+import MyRides from "./pages/MyRides";
+import Notifications from "./pages/Notifications";
 function App() {
 
   const token = localStorage.getItem("token");
@@ -19,11 +20,9 @@ function App() {
 
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     window.location.href = "/login";
 
   };
-
   return (
     <BrowserRouter>
 
@@ -48,11 +47,13 @@ function App() {
           <Link to="/search" className="hover:text-gray-200">
             Search Ride
           </Link>
-
+          
           <Link to="/mybookings" className="hover:text-gray-200">
             My Bookings
           </Link>
-
+          <Link to="/my-rides" className="hover:text-gray-200">
+          My Rides
+          </Link>
           {!token ? (
             <>
               <Link to="/register" className="hover:text-gray-200">
@@ -96,14 +97,15 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
 <Route path="/admin/bookings" element={<AdminBookings />} />
 <Route path="/admin/rides" element={<AdminRides />} />
-       <Route
-  path="/offer"
-  element={
+<Route path="/my-rides" element={<MyRides />} />
+<Route path="/notifications" element={<Notifications />} />
+{/* 
+<Route path="/offer" element={
     <DriverRoute>
       <OfferRide />
     </DriverRoute>
-  }
-/>
+  } 
+/>*/}
       </Routes>
 
     </BrowserRouter>

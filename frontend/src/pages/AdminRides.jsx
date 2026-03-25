@@ -1,130 +1,167 @@
-// import { useState } from "react";
-// import API from "../services/api";
 
-// function AdminRides() {
-
-//   const [ride, setRide] = useState({
-//     fromCity: "",
-//     toCity: "",
-//     date: "",
-//     price: "",
-//     seatsAvailable: ""
-//   });
-
-//   const handleChange = (e) => {
-//     setRide({
-//       ...ride,
-//       [e.target.name]: e.target.value
-//     });
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     try {
-
-//       const res = await API.post("/rides/offer", ride);
-
-//       console.log("SUCCESS:", res.data);
-
-//       alert("Ride created successfully");
-
-//     } catch (error) {
-
-//       console.log("ERROR:", error.response?.data);
-
-//       alert(error.response?.data?.message || "Error creating ride");
-
-//     }
-//   };
-
-//   return (
-//     <div className="p-6">
-
-//       <h2 className="text-2xl font-bold mb-4">Create Ride</h2>
-
-//       <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-80">
-
-//         <input name="fromCity" placeholder="From" onChange={handleChange} required />
-//         <input name="toCity" placeholder="To" onChange={handleChange} required />
-//         <input type="date" name="date" onChange={handleChange} required />
-//         <input name="price" placeholder="Price" onChange={handleChange} required />
-//         <input name="seatsAvailable" placeholder="Seats" onChange={handleChange} required />
-
-//         <button className="bg-blue-500 text-white p-2 rounded">
-//           Create Ride
-//         </button>
-
-//       </form>
-
-//     </div>
-//   );
-// }
-
-// export default AdminRides;
-
-
-
-
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../services/api";
 
 function AdminRides() {
 
-  const [ride, setRide] = useState({
-    fromCity: "",
-    toCity: "",
-    date: "",
-    price: "",
-    seatsAvailable: ""
-  });
+  const [rides, setRides] = useState([]);
+  const [priceInput, setPriceInput] = useState({});
+  const [rejectReason, setRejectReason] = useState({});
 
-  const handleChange = (e) => {
-    setRide({
-      ...ride,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const fetchRides = async () => {
     try {
-      await API.post("/rides/offer", ride);
-      alert("Ride created successfully");
-
-      setRide({
-        fromCity: "",
-        toCity: "",
-        date: "",
-        price: "",
-        seatsAvailable: ""
-      });
-
+      const res = await API.get("/rides/admin");
+      setRides(res.data);
     } catch (error) {
-      alert(error.response?.data || "Error");
+      console.log(error);
     }
   };
 
+  useEffect(() => {
+    fetchRides();
+  }, []);
+
+  // ✅ APPROVE
+  const approveRide = async (id) => {
+    const price = priceInput[id];
+
+    if (!price) {
+      alert("Enter price");
+      return;
+    }
+
+    try {
+      await API.put(`/rides/approve/${id}`, { price });
+      alert("Ride Approved");
+      fetchRides();
+    } catch (error) {
+      console.log(error);
+      alert("Error approving ride");
+    }
+  };
+
+  // ✅ REJECT
+  const rejectRide = async (id) => {
+    const reason = rejectReason[id];
+
+    if (!reason) {
+      alert("Enter reject reason");
+      return;
+    }
+
+  //   try {
+  //     await API.put(`/rides/reject/${id}`, { reason });
+  //     alert("Ride Rejected");
+  //     fetchRides();
+  //   } catch (error) {
+  //     console.log(error);
+  //     alert("Error rejecting ride");
+  //   }
+  // };
+   try {
+    await API.put(`/rides/reject/${id}`, {
+      reason: reason   // ✅ MUST SEND THIS
+    });
+
+    alert("Ride Rejected");
+    fetchRides();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
   return (
-    <div className="flex justify-center mt-10">
+    <div className="p-6">
 
-      <form onSubmit={handleSubmit} className="bg-white p-8 shadow rounded w-96">
+      <h2 className="text-2xl font-bold mb-6">
+        Admin Ride Requests
+      </h2>
 
-        <h2 className="text-2xl font-bold mb-6 text-center">Create Ride</h2>
+      {rides.length === 0 ? (
+        <p>No rides found</p>
+      ) : (
+        rides.map((ride) => (
+          <div
+            key={ride._id}
+            className="bg-white p-4 mb-4 shadow rounded"
+          >
 
-        <input name="fromCity" placeholder="From City" onChange={handleChange} className="w-full border p-2 mb-3" />
-        <input name="toCity" placeholder="To City" onChange={handleChange} className="w-full border p-2 mb-3" />
-        <input type="date" name="date" onChange={handleChange} className="w-full border p-2 mb-3" />
-        <input type="number" name="price" placeholder="Price (₹)" onChange={handleChange} className="w-full border p-2 mb-3" />
-        <input type="number" name="seatsAvailable" placeholder="Seats" onChange={handleChange} className="w-full border p-2 mb-4" />
+            <p>
+              <b>{ride.fromCity} → {ride.toCity}</b>
+            </p>
 
-        <button className="w-full bg-blue-600 text-white p-2 rounded">
-          Create Ride
-        </button>
+            <p>
+              Date: {new Date(ride.date).toLocaleDateString()}
+            </p>
 
-      </form>
+            {/* ✅ STATUS COLOR */}
+            <p className={`font-semibold 
+              ${ride.status === "approved" ? "text-green-600" :
+                ride.status === "rejected" ? "text-red-600" :
+                "text-yellow-600"}`}>
+              Status: {ride.status}
+            </p>
+
+            <p>User: {ride.user?.email}</p>
+
+            {/* ✅ SHOW REJECTION REASON */}
+            {ride.status === "rejected" && (
+              <p className="text-red-500">
+                Reason: {ride.rejectionReason}
+              </p>
+            )}
+
+            {/* ✅ ACTIONS */}
+            {ride.status === "pending" && (
+              <div className="mt-3">
+
+                {/* APPROVE */}
+                <input
+                  type="number"
+                  placeholder="Set Price"
+                  onChange={(e) =>
+                    setPriceInput({
+                      ...priceInput,
+                      [ride._id]: e.target.value
+                    })
+                  }
+                  className="border p-1 mr-2"
+                />
+
+                <button
+                  onClick={() => approveRide(ride._id)}
+                  className="bg-green-500 text-white px-3 py-1 rounded mr-2"
+                >
+                  Approve
+                </button>
+
+                {/* REJECT */}
+                <input
+                  type="text"
+                  placeholder="Reject reason"
+                  onChange={(e) =>
+                    setRejectReason({
+                      ...rejectReason,
+                      [ride._id]: e.target.value
+                    })
+                  }
+                  className="border p-1 mr-2"
+                />
+
+                <button
+                  onClick={() => rejectRide(ride._id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Reject
+                </button>
+
+              </div>
+            )}
+
+          </div>
+        ))
+      )}
+
     </div>
   );
 }

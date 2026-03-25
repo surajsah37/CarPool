@@ -12,13 +12,15 @@ function Navbar() {
       <div className="flex gap-5">
         <Link to="/">Home</Link>
         <Link to="/search">Find Ride</Link>
-
+         <Link to="/my-rides">My Rides</Link>
+        <Link to="/notifications">Notifications</Link>
         {/* ✅ ONLY ADMIN CAN SEE */}
         {user?.role === "admin" && (
           <Link to="/offer">Offer Ride</Link>
         )}
 
         <Link to="/login">Login</Link>
+       
       </div>
 
     </div>

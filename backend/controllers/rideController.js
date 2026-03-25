@@ -1,79 +1,157 @@
-const Ride = require("../models/Ride");
 
-// ✅ CREATE RIDE (ADMIN)
+const Ride = require("../models/Ride");
+const Notification = require("../models/Notification");
+// ✅ USER REQUEST RIDE
 exports.offerRide = async (req, res) => {
   try {
+    console.log("USER:", req.user); // DEBUG
 
-    const { fromCity, toCity, date, price, seatsAvailable } = req.body;
+    const { fromCity, toCity, date, seatsAvailable } = req.body;
 
-    if (!fromCity || !toCity || !date || !price || !seatsAvailable) {
-      return res.status(400).json({
-        message: "All fields are required"
-      });
-    }
-
-    // const ride = new Ride({
-    //   fromCity,
-    //   toCity,
-    //   date,
-    //   price,
-    //   seatsAvailable
-    // });
     const ride = new Ride({
-  fromCity: fromCity.trim().toLowerCase(),
-  toCity: toCity.trim().toLowerCase(),
-  date: new Date(date),   // ✅ FIXED
-  price,
-  seatsAvailable
-});
+      fromCity: fromCity.trim().toLowerCase(),
+      toCity: toCity.trim().toLowerCase(),
+      date: new Date(date),
+      seatsAvailable,
+      user: req.user.id, // ✅ MUST SAVE USER
+      status: "pending",
+      price: 0
+    });
+
     await ride.save();
 
-    res.status(201).json({
-      message: "Ride created successfully",
-      ride
-    });
+    res.json({ message: "Ride request sent", ride });
 
   } catch (error) {
-    console.log("ERROR:", error);
-    res.status(500).json({
-      message: "Error creating ride"
-    });
+    console.log(error);
+    res.status(500).json("Error");
   }
 };
 
+// ✅ USER SEE ONLY APPROVED RIDES
 exports.getRides = async (req, res) => {
   try {
-    const { fromCity, toCity, date } = req.query;
+    const rides = await Ride.find({ status: "approved" });
+    res.json(rides);
+  } catch (error) {
+    res.status(500).json("Error");
+  }
+};
 
-    let query = {};
+// ✅ ADMIN SEE ALL RIDES
+exports.getAllRidesAdmin = async (req, res) => {
+  try {
+    const rides = await Ride.find().populate("user", "email");
+    res.json(rides);
+  } catch (error) {
+    res.status(500).json("Error");
+  }
+};
 
-    if (fromCity) {
-      query.fromCity = fromCity.trim().toLowerCase();
-    }
+// ✅ APPROVE
+// exports.approveRide = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { price } = req.body;
 
-    if (toCity) {
-      query.toCity = toCity.trim().toLowerCase();
-    }
+//     const ride = await Ride.findById(id);
 
-    if (date) {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
+//     ride.status = "approved";
+//     ride.price = price;
 
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
+//     await ride.save();
 
-      query.date = {
-        $gte: start,
-        $lte: end
-      };
-    }
+//     res.json({ message: "Approved" });
 
-    const rides = await Ride.find(query);
+//   } catch (error) {
+//     res.status(500).json("Error");
+//   }
+// };
+exports.approveRide = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { price } = req.body;
+
+    const ride = await Ride.findById(id);
+
+    ride.status = "approved";
+    ride.price = price;
+
+    await ride.save();
+
+    // ✅ CREATE NOTIFICATION
+    await Notification.create({
+      user: ride.user,
+      message: `Your ride from ${ride.fromCity} to ${ride.toCity} is approved. Price: ₹${price}`
+    });
+
+    res.json({ message: "Approved" });
+
+  } catch (error) {
+    res.status(500).json("Error");
+  }
+};
+// exports.rejectRide = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { reason } = req.body;
+
+//     console.log("🔥 RECEIVED REASON:", reason); // DEBUG
+
+//     const ride = await Ride.findById(id);
+
+//     if (!ride) {
+//       return res.status(404).json("Ride not found");
+//     }
+
+//     ride.status = "rejected";
+//     ride.rejectionReason = reason; // ✅ IMPORTANT
+
+//     await ride.save();
+
+//     console.log("🔥 SAVED:", ride.rejectionReason); // DEBUG
+
+//     res.json({ message: "Ride rejected successfully", ride });
+
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json("Error");
+//   }
+// };
+exports.rejectRide = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const ride = await Ride.findById(id);
+
+    ride.status = "rejected";
+    ride.rejectionReason = reason;
+
+    await ride.save();
+
+    // ✅ CREATE NOTIFICATION
+    await Notification.create({
+      user: ride.user,
+      message: `Your ride was rejected: ${reason}`
+    });
+
+    res.json({ message: "Rejected" });
+
+  } catch (error) {
+    res.status(500).json("Error");
+  }
+};
+// ✅ GET USER RIDES (IMPORTANT)
+exports.getMyRides = async (req, res) => {
+  try {
+    console.log("FETCH USER:", req.user);
+
+    const rides = await Ride.find({ user: req.user.id });
 
     res.json(rides);
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json("Server error");
+    res.status(500).json("Error");
   }
 };
