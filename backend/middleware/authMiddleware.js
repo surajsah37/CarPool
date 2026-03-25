@@ -1,10 +1,60 @@
+// const jwt = require("jsonwebtoken");
+
+// // VERIFY TOKEN
+// const verifyToken = (req, res, next) => {
+//   const authHeader = req.headers.authorization;
+
+//   if (!authHeader) {
+//     return res.status(401).json({
+//       message: "Access denied. Please login first."
+//     });
+//   }
+
+//   try {
+//     const token = authHeader.split(" ")[1];
+
+//     const verified = jwt.verify(token, process.env.JWT_SECRET);
+
+//     req.user = verified;
+
+//     next();
+//   } catch (error) {
+//     return res.status(401).json({
+//       message: "Invalid token"
+//     });
+//   }
+// };
+
+// // ADMIN CHECK
+// const isAdmin = (req, res, next) => {
+//   if (req.user && req.user.role === "admin") {
+//     next();
+//   } else {
+//     return res.status(403).json({
+//       message: "Access denied. Admin only."
+//     });
+//   }
+// };
+
+// module.exports = { verifyToken, isAdmin };
+
+
+
+
+
+
+
+
+
+
 const jwt = require("jsonwebtoken");
 
+// ✅ VERIFY TOKEN
 const verifyToken = (req, res, next) => {
 
-  const authHeader = req.headers.authorization;
+  const token = req.headers.authorization?.split(" ")[1];
 
-  if (!authHeader) {
+  if (!token) {
     return res.status(401).json({
       message: "Access denied. Please login first."
     });
@@ -12,17 +62,15 @@ const verifyToken = (req, res, next) => {
 
   try {
 
-    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = verified;
+    req.user = decoded; // contains id + role
 
     next();
 
   } catch (error) {
 
-    res.status(401).json({
+    return res.status(401).json({
       message: "Invalid token"
     });
 
@@ -30,4 +78,17 @@ const verifyToken = (req, res, next) => {
 
 };
 
-module.exports = verifyToken;
+// ✅ ADMIN CHECK
+const isAdmin = (req, res, next) => {
+
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    return res.status(403).json({
+      message: "Access denied. Admin only."
+    });
+  }
+
+};
+
+module.exports = { verifyToken, isAdmin };

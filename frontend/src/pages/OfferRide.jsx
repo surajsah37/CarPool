@@ -1,7 +1,21 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import API from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 function OfferRide() {
+
+  //const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  useEffect(() => {
+    if (!user || user.role !== "admin") {
+      alert("Access denied. Admin only.");
+      navigate("/");
+    }
+  }, []);
+ 
+  const navigate = useNavigate();
 
   const [ride, setRide] = useState({
     fromCity: "",
@@ -12,10 +26,12 @@ function OfferRide() {
   });
 
   const handleChange = (e) => {
+
     setRide({
       ...ride,
       [e.target.name]: e.target.value
     });
+
   };
 
   const handleSubmit = async (e) => {
@@ -24,15 +40,17 @@ function OfferRide() {
 
     try {
 
-      const res = await API.post("/rides/offer", ride);
+      await API.post("/rides/offer", ride);
 
-      alert("Ride Created Successfully");
+      alert("Ride offered successfully");
 
-      console.log(res.data);
+      navigate("/search");
 
     } catch (error) {
 
       console.log(error);
+
+      alert("Failed to offer ride");
 
     }
 
@@ -40,62 +58,70 @@ function OfferRide() {
 
   return (
 
-    <div style={{padding:"40px"}}>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
 
-      <h2>Offer a Ride</h2>
+      <div className="bg-white shadow-lg rounded-lg p-8 w-[400px]">
 
-      <form onSubmit={handleSubmit}>
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Offer a Ride
+        </h2>
 
-        <input
-          name="fromCity"
-          placeholder="From City"
-          onChange={handleChange}
-        />
+        <form onSubmit={handleSubmit}>
 
-        <br/><br/>
+          <input
+            type="text"
+            name="fromCity"
+            placeholder="From City"
+            onChange={handleChange}
+            className="w-full border p-2 mb-4 rounded"
+          />
 
-        <input
-          name="toCity"
-          placeholder="To City"
-          onChange={handleChange}
-        />
+          <input
+            type="text"
+            name="toCity"
+            placeholder="To City"
+            onChange={handleChange}
+            className="w-full border p-2 mb-4 rounded"
+          />
 
-        <br/><br/>
+          <input
+            type="date"
+            name="date"
+            onChange={handleChange}
+            className="w-full border p-2 mb-4 rounded"
+          />
 
-        <input
-          type="date"
-          name="date"
-          onChange={handleChange}
-        />
+          <input
+            type="number"
+            name="price"
+            placeholder="Price"
+            onChange={handleChange}
+            className="w-full border p-2 mb-4 rounded"
+          />
 
-        <br/><br/>
+          <input
+            type="number"
+            name="seatsAvailable"
+            placeholder="Seats Available"
+            onChange={handleChange}
+            className="w-full border p-2 mb-6 rounded"
+          />
 
-        <input
-          name="price"
-          placeholder="Price"
-          onChange={handleChange}
-        />
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          >
+            Offer Ride
+          </button>
 
-        <br/><br/>
+        </form>
 
-        <input
-          name="seatsAvailable"
-          placeholder="Seats"
-          onChange={handleChange}
-        />
-
-        <br/><br/>
-
-        <button type="submit">
-          Offer Ride
-        </button>
-
-      </form>
+      </div>
 
     </div>
 
   );
 
 }
-
 export default OfferRide;
+
