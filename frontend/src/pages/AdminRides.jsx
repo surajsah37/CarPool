@@ -22,24 +22,32 @@ function AdminRides() {
   }, []);
 
   // ✅ APPROVE
+  // const approveRide = async (id) => {
+  //   const price = priceInput[id];
+
+  //   if (!price) {
+  //     alert("Enter price");
+  //     return;
+  //   }
+  //   try {
+  //     await API.put(`/rides/approve/${id}`, { price });
+  //     alert("Ride Approved");
+  //     fetchRides();
+  //   } catch (error) {
+  //     console.log(error);
+  //     alert("Error approving ride");
+  //   }
+  // };
   const approveRide = async (id) => {
-    const price = priceInput[id];
-
-    if (!price) {
-      alert("Enter price");
-      return;
-    }
-
-    try {
-      await API.put(`/rides/approve/${id}`, { price });
-      alert("Ride Approved");
-      fetchRides();
-    } catch (error) {
-      console.log(error);
-      alert("Error approving ride");
-    }
-  };
-
+  try {
+    await API.put(`/rides/approve/${id}`);
+    alert("Ride Approved");
+    fetchRides();
+  } catch (error) {
+    console.log(error);
+    alert("Error approving ride");
+  }
+};
   // ✅ REJECT
   const rejectRide = async (id) => {
     const reason = rejectReason[id];
@@ -167,3 +175,4 @@ function AdminRides() {
 }
 
 export default AdminRides;
+

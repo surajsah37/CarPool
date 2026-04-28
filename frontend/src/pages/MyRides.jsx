@@ -14,8 +14,17 @@ function MyRides() {
     setRides(res.data);
   };
 
+  const handleCancel = async (rideId) => {
+    try {
+      await API.delete(`/rides/${rideId}`);
+      setRides(rides.filter(ride => ride._id !== rideId));
+    } catch (error) {
+      console.error("Error canceling ride:", error);
+    }
+  };
+
   return (
-    <div className="p-6">
+    <div className="p-9">
 
       <h2 className="text-2xl font-bold mb-6">
         My Ride Requests
@@ -48,5 +57,6 @@ function MyRides() {
     </div>
   );
 }
+
 
 export default MyRides;

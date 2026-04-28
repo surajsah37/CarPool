@@ -4,7 +4,7 @@ const Notification = require("../models/Notification");
 // ✅ USER REQUEST RIDE
 exports.offerRide = async (req, res) => {
   try {
-    console.log("USER:", req.user); // DEBUG
+    console.log("USER:", req.user);
 
     const { fromCity, toCity, date, seatsAvailable } = req.body;
 
@@ -13,20 +13,21 @@ exports.offerRide = async (req, res) => {
       toCity: toCity.trim().toLowerCase(),
       date: new Date(date),
       seatsAvailable,
-      user: req.user.id, // ✅ MUST SAVE USER
+      user: req.user.id,
       status: "pending",
       price: 0
     });
 
-    await ride.save();
+    await ride.save(); // ✅ IMPORTANT
 
-    res.json({ message: "Ride request sent", ride });
+    res.json({ message: "Ride requested successfully" });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json("Error");
+    console.error(error);
+    res.status(500).json("Error creating ride");
   }
 };
+
 // ✅ USER SEE ONLY APPROVED RIDES
 exports.getRides = async (req, res) => {
   try {
@@ -51,20 +52,16 @@ exports.getAllRidesAdmin = async (req, res) => {
 exports.approveRide = async (req, res) => {
   try {
     const { id } = req.params;
-    const { price } = req.body;
 
     const ride = await Ride.findById(id);
 
     ride.status = "approved";
-    ride.price = price;
-
     await ride.save();
 
-    // ✅ MOVE HERE (INSIDE FUNCTION)
     const io = req.app.get("io");
 
     io.emit("notification", {
-      message: `Ride approved: ₹${price}`
+      message: `Ride approved successfully`
     });
 
     res.json({ message: "Approved" });
@@ -73,6 +70,8 @@ exports.approveRide = async (req, res) => {
     res.status(500).json("Error");
   }
 };
+
+// ✅ REJECT RIDE
 exports.rejectRide = async (req, res) => {
   try {
     const { id } = req.params;
@@ -85,7 +84,6 @@ exports.rejectRide = async (req, res) => {
 
     await ride.save();
 
-    // ✅ MOVE HERE
     const io = req.app.get("io");
 
     io.emit("notification", {
@@ -98,7 +96,8 @@ exports.rejectRide = async (req, res) => {
     res.status(500).json("Error");
   }
 };
-// ✅ GET USER RIDES (IMPORTANT)
+
+// ✅ GET USER RIDES
 exports.getMyRides = async (req, res) => {
   try {
     console.log("FETCH USER:", req.user);
